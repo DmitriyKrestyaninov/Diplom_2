@@ -102,6 +102,7 @@ public class TestCreateOrders {
 
         int orderNumber = responseOrder.extract().path("order.number");
         softAssertion.assertThat(orderNumber).isNotNull();
+        softAssertion.assertAll();
     }
 
     public String getAuthorizationToken(User user) {
