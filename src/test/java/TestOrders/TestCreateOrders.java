@@ -3,11 +3,9 @@ package TestOrders;
 import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.ValidatableResponse;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import diplom2.*;
+import org.assertj.core.api.SoftAssertions;
 
 import static constants.TextOfMessagesResponse.MESS_CREATE_ORDER_WITHOUT_INGREDIENTS;
 import static org.apache.http.HttpStatus.*;
@@ -19,6 +17,7 @@ public class TestCreateOrders {
 
     private Order order;
     private OrderClient orderClient;
+
 
     @Before
     public void setUp() {
@@ -40,61 +39,69 @@ public class TestCreateOrders {
     @DisplayName("Test create order /api/orders")
     @Description("Test checks to ability create order of burger")
     public void testCreateOrder() {
-        ValidatableResponse responseOrder = orderClient.createOrder(order,bearerToken);
+
+        SoftAssertions softAssertion = new SoftAssertions();
+        ValidatableResponse responseOrder = orderClient.createOrder(order, bearerToken);
 
         int statusCode = responseOrder.extract().statusCode();
-        Assert.assertEquals("Status code is incorrect",SC_OK, statusCode);
+        Assert.assertEquals("Status code is incorrect", SC_OK, statusCode);
 
         boolean success = responseOrder.extract().path("success");
-        Assert.assertTrue("Such order not exists",success);
+        softAssertion.assertThat(success).isTrue();
 
         String name = responseOrder.extract().path("name");
-        Assert.assertNotNull("TC name", name);
+        softAssertion.assertThat(name).isNotNull();
 
         int orderNumber = responseOrder.extract().path("order.number");
-        Assert.assertNotNull("The response does not contain order number", orderNumber);
+        softAssertion.assertThat(orderNumber).isNotNull();
+        softAssertion.assertAll();
     }
 
     @Test
     @DisplayName("Test create order without ingredients")
     @Description("Test check get error on request without ingredients")
-    public void testCreateOrderWithoutIngredients(){
-        ValidatableResponse responseOrder = orderClient.createOrder(OrderGenerator.getOrderWithoutOngredients(),bearerToken);
+    public void testCreateOrderWithoutIngredients() {
+        ValidatableResponse responseOrder = orderClient.createOrder(OrderGenerator.getOrderWithoutOngredients(), bearerToken);
+        SoftAssertions softAssertion = new SoftAssertions();
 
-        int  statusCode = responseOrder.extract().statusCode();
-        Assert.assertEquals("Status code is incorrect",SC_BAD_REQUEST,statusCode);
+        int statusCode = responseOrder.extract().statusCode();
+        Assert.assertEquals("Status code is incorrect", SC_BAD_REQUEST, statusCode);
 
         boolean success = responseOrder.extract().path("success");
-        Assert.assertFalse("Field 'success' is incorrect",success);
+        softAssertion.assertThat(success).isFalse();
 
         String messageResponse = responseOrder.extract().path("message");
-        Assert.assertEquals("The request message without ingredients is incorrect",MESS_CREATE_ORDER_WITHOUT_INGREDIENTS,messageResponse);
+        softAssertion.assertThat(messageResponse).isEqualTo(MESS_CREATE_ORDER_WITHOUT_INGREDIENTS);
+        softAssertion.assertAll();
     }
+
     @Test
     @DisplayName("Test create order with incorrect hashcode ingredients")
     @Description("Test check get error on request with incorrect hashcode ingredients")
-    public void testCreateOrderWithIncorrectHashCodeIngredients(){
-        ValidatableResponse responseOrder = orderClient.createOrder(OrderGenerator.getOrderWithIncorrectHashCodeIngredients(),bearerToken);
+    public void testCreateOrderWithIncorrectHashCodeIngredients() {
+        ValidatableResponse responseOrder = orderClient.createOrder(OrderGenerator.getOrderWithIncorrectHashCodeIngredients(), bearerToken);
 
-        int  statusCode = responseOrder.extract().statusCode();
-        Assert.assertEquals("Status code is incorrect",SC_INTERNAL_SERVER_ERROR,statusCode);
+        int statusCode = responseOrder.extract().statusCode();
+        Assert.assertEquals("Status code is incorrect", SC_INTERNAL_SERVER_ERROR, statusCode);
     }
 
     @Test
     @DisplayName("Test create order without authorization")
-    public void testCreateOrderWithoutAuthorization(){
+    public void testCreateOrderWithoutAuthorization() {
         ValidatableResponse responseOrder = orderClient.createOrderWithoutAuthorization(order);
+        SoftAssertions softAssertion = new SoftAssertions();
+
         int statusCode = responseOrder.extract().statusCode();
-        Assert.assertEquals("Status code is incorrect",SC_OK, statusCode);
+        Assert.assertEquals("Status code is incorrect", SC_OK, statusCode);
 
         boolean success = responseOrder.extract().path("success");
-        Assert.assertTrue("Such order not exists",success);
+        softAssertion.assertThat(success).isTrue();
 
         String name = responseOrder.extract().path("name");
-        Assert.assertNotNull("The response does not contain name", name);
+        softAssertion.assertThat(name).isNotNull();
 
         int orderNumber = responseOrder.extract().path("order.number");
-        Assert.assertNotNull("The response does not contain order number", orderNumber);
+        softAssertion.assertThat(orderNumber).isNotNull();
     }
 
     public String getAuthorizationToken(User user) {

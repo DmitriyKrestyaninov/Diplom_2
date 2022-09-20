@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import diplom2.*;
+import org.assertj.core.api.SoftAssertions;
 
 import static constants.TextOfMessagesResponse.*;
 import static org.apache.http.HttpStatus.*;
@@ -33,32 +34,37 @@ public class TestChangeUserInfo {
     @Test
     @DisplayName("Test change information user /api/auth/user")
     @Description("The test checks the change of information about user: accepted code '200'")
-    public void testChangeInformationWithAuthorization(){
+    public void testChangeInformationWithAuthorization() {
+        SoftAssertions softAssertion = new SoftAssertions();
+
         ValidatableResponse response = userClient.createUser(user);
         String bearerTokenStr = response.extract().path("accessToken");
         bearerToken = bearerTokenStr.replace("Bearer ", "");
 
         User userChange = UserGenerator.getChangedInfo();
 
-        ValidatableResponse responseChangedInfo = userClient.changeUserInfoWithAuthorization(userChange,bearerToken);
+        ValidatableResponse responseChangedInfo = userClient.changeUserInfoWithAuthorization(userChange, bearerToken);
         int statusCode = responseChangedInfo.extract().statusCode();
         Assert.assertEquals("Status code is incorrect", SC_OK, statusCode);
 
         boolean isChanged = responseChangedInfo.extract().path("success");
-        Assert.assertTrue("User is not changed", isChanged);
+        softAssertion.assertThat(isChanged).isTrue();
 
         String email = responseChangedInfo.extract().path("user.email");
-        Assert.assertNotNull("The response does not contain email", email);
-        Assert.assertEquals("The email in response and email in request not to match",userChange.getEmail(),email);
+        softAssertion.assertThat(email).isNotNull();
+        softAssertion.assertThat(email).isEqualTo(userChange.getEmail());
 
         String name = responseChangedInfo.extract().path("user.name");
-        Assert.assertNotNull("The response does not contain name", name);
-        Assert.assertEquals("The name in response and name in request not to match",userChange.getName(),name);
+        softAssertion.assertThat(name).isNotNull();
+        softAssertion.assertThat(name).isEqualTo((userChange.getName()));
+
+        softAssertion.assertAll();
     }
+
     @Test
     @DisplayName("Test change information user /api/auth/user")
     @Description("The test checks the change of information about user: accepted code '200'")
-    public void testChangeInformationWithoutAuthorization(){
+    public void testChangeInformationWithoutAuthorization() {
         ValidatableResponse response = userClient.createUser(user);
         String bearerTokenStr = response.extract().path("accessToken");
         bearerToken = bearerTokenStr.replace("Bearer ", "");

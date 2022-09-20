@@ -11,6 +11,7 @@ import diplom2.User;
 import diplom2.UserClient;
 import diplom2.UserCredentials;
 import diplom2.UserGenerator;
+import org.assertj.core.api.SoftAssertions;
 
 import static org.apache.http.HttpStatus.*;
 import static constants.TextOfMessagesResponse.*;
@@ -37,29 +38,32 @@ public class TestLoginUser {
     @DisplayName("TEST login user /api/auth/login")
     @Description("Test checks ability to login user: status  code  '200'")
     public void testCheckLoginUser() {
+        SoftAssertions softAssertion = new SoftAssertions();
+
         userClient.createUser(user);
         ValidatableResponse loginResponse = userClient.loginUser(UserCredentials.from(user));
         int statusCode = loginResponse.extract().statusCode();
         Assert.assertEquals("User not login", SC_OK, statusCode);
 
         boolean success = loginResponse.extract().path("success");
-        Assert.assertTrue("Such user not exists", success);
+        softAssertion.assertThat(success).isTrue();
 
         String bearerTokenStr = loginResponse.extract().path("accessToken");
-        Assert.assertNotNull("The response does not contain accesToken", bearerTokenStr);
+        softAssertion.assertThat(bearerTokenStr).isNotNull();
 
         bearerToken = bearerTokenStr.replace("Bearer ", "");
 
         String refreshToken = loginResponse.extract().path("refreshToken");
-        Assert.assertNotNull("The response does not contain refreshToken", refreshToken);
+        softAssertion.assertThat(refreshToken).isNotNull();
 
         String email = loginResponse.extract().path("user.email");
-        Assert.assertNotNull("The response does not contain email", email);
-        Assert.assertEquals("The email in response and email in request not to match",user.getEmail(),email);
+        softAssertion.assertThat(email).isNotNull();
+        softAssertion.assertThat(email).isEqualTo(user.getEmail());
 
         String name = loginResponse.extract().path("user.name");
-        Assert.assertNotNull("The response does not contain name", name);
-        Assert.assertEquals("The name in response and name in request not to match",user.getName(),name);
+        softAssertion.assertThat(name).isNotNull();
+        softAssertion.assertThat(name).isEqualTo(user.getName());
+        softAssertion.assertAll();
     }
 
     @Test

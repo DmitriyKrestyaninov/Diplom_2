@@ -8,6 +8,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import diplom2.*;
+import org.assertj.core.api.SoftAssertions;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import static constants.TextOfMessagesResponse.MESS_LOG_CHANGE_INFO_WITHOUT_AUTH;
 import static org.apache.http.HttpStatus.*;
@@ -42,13 +46,16 @@ public class TestGetListOrders {
     @Description("Test checking the receipt of a list of user orders")
     public void testGetOrdersUser() {
         ValidatableResponse response = orderClient.getlistOrders(bearerToken);
+        SoftAssertions softAssertion = new SoftAssertions();
 
         int statusCode = response.extract().statusCode();
         Assert.assertEquals("Status code is incorrect", SC_OK, statusCode);
 
         boolean success = response.extract().path("success");
-        Assert.assertTrue("receiving orders unsuccessfully", success);
-        Assert.assertNotNull("The response does not contain list orders", response.extract().path("orders"));
+        softAssertion.assertThat(success).isTrue();
+        ArrayList<String> orders = response.extract().path("orders");
+        softAssertion.assertThat(orders).isNotNull();
+        softAssertion.assertAll();
     }
 
     @Test
